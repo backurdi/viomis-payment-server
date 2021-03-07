@@ -20,6 +20,6 @@ app.use(cookieParser());
 // Use Handlebars as the view engine
 app.set("view engine", "handlebars");
 
-app.use("/payment", paymentRouter);
+app.use("/v1/payment", paymentRouter);
 
 module.exports = app;
