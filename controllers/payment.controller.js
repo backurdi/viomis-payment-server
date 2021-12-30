@@ -12,21 +12,8 @@ exports.getVersion = (req, res) => {
   });
 };
 
-exports.setup = (req, res) => {
-  res.send({
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
-    100: process.env.HUNDRED_PRICE_ID,
-    250: process.env.TWOFIFTY_PRICE_ID,
-    500: process.env.FIVE_PRICE_ID,
-    750: process.env.SEVENFIFTY_PRICE_ID,
-    1000: process.env.THOUSAND_PRICE_ID,
-    2500: process.env.TWOTHOUSANDFIVE_PRICE_ID,
-    5000: process.env.FIVETHOUSAND_PRICE_ID,
-  });
-};
-
 exports.createCheckoutSession = catchAsync(async (req, res) => {
-  const { priceId } = process.env.FIVE_PRICE_ID;
+  const { lineItems, intend } = req.body;
 
   // See https://stripe.com/docs/api/checkout/sessions/create
   // for additional parameters to pass.
@@ -34,16 +21,8 @@ exports.createCheckoutSession = catchAsync(async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      line_items: [
-        {
-          name: "test",
-          price: priceId,
-          amount: req.body.amount * 100,
-          // For metered billing, do not pass quantity
-          quantity: 1,
-          currency: "DKK",
-        },
-      ],
+      line_items: lineItems,
+      payment_intent_data: { description: intend },
       // {CHECKOUT_SESSION_ID} is a string literal; do not change it!
       // the actual Session ID is returned in the query parameter when your customer
       // is redirected to the success page.
@@ -56,7 +35,6 @@ exports.createCheckoutSession = catchAsync(async (req, res) => {
       url: session.url,
     });
   } catch (e) {
-    console.log(e);
     res.status(400);
     return res.send({
       error: {
@@ -64,4 +42,13 @@ exports.createCheckoutSession = catchAsync(async (req, res) => {
       },
     });
   }
+});
+
+exports.products = catchAsync(async (req, res, next) => {
+  const products = await stripe.products.list();
+
+  res.status(200).json({
+    message: "Success",
+    data: products.data,
+  });
 });
